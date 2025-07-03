@@ -1,0 +1,1 @@
+from audioanalyzer import analyze
