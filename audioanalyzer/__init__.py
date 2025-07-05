@@ -1,1 +1,1 @@
-from audioanalyzer import analyze
+from audioanalyzer import analyze, archive

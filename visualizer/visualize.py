@@ -1,19 +1,14 @@
-from enum import Enum
+
 from pathlib import Path
 
 import pyglet
 from pyglet.window import key, FPSDisplay
 
 from visualizer import gui, resources
+from visualizer.appstates import AppStates
 from visualizer.circle import Circle
-from audioanalyzer.analyze import run_checks
-
-
-class AppStates(Enum):
-    MAIN_MENU = 0
-    ANALYZING = 1
-    PLAYING = 2
-    PAUSED = 3
+from visualizer.mediaplayer import Player
+from audioanalyzer.analyze import run_analysis
 
 
 class VisualizerWindow(pyglet.window.Window):
@@ -38,17 +33,20 @@ class VisualizerWindow(pyglet.window.Window):
         self.analysis_batch = pyglet.graphics.Batch()
         self.analysis_screen: pyglet.text.Label
         # Create play screen
-        self.frame = 0
+        self.song_over = False
         self.play_batch = pyglet.graphics.Batch()
         # TODO: More interesting visual effects
+        # TODO: Menu for selecting visual effects
         self.play_group = self.red_and_white(self.play_batch)
-        # TODO: Add pause menu [continue, change song, exit]
+        # Create pause menu
+        self.pause_menu_batch = pyglet.graphics.Batch()
+        self.pause_menu = self.create_pause_menu(self.pause_menu_batch)
         # Create key handler
         self.key_handler = key.KeyStateHandler()
         self.push_handlers(self.key_handler)
         # Create player
         self.audio_path: Path
-        self.player = pyglet.media.Player()
+        self.player = Player(self)
 
         pyglet.clock.schedule_interval(self.update, 1.0 / self.frame_rate)
 
@@ -79,6 +77,12 @@ class VisualizerWindow(pyglet.window.Window):
         w_circle = Circle(self.width//2, self.height//2, 100, color=(255, 255, 255), batch=batch)
         return [r_circle, w_circle]
 
+    def create_pause_menu(self, batch: pyglet.graphics.Batch):
+        menu_texts = ["play", "main menu", "exit"]
+        pause_menu = gui.create_menu_labels(menu_texts, self.width//2, self.height//2,
+                                            'center', 'bottom', 60, batch)
+        return pause_menu
+
     def on_draw(self):
         self.clear()
 
@@ -92,31 +96,43 @@ class VisualizerWindow(pyglet.window.Window):
         if self.app_state == AppStates.PLAYING:
             self.play_batch.draw()
 
+        if self.app_state == AppStates.PAUSED:
+            self.pause_menu_batch.draw()
+
         if self.show_fps:
             self.fps_display.draw()
 
     def update(self, dt):
         if self.app_state == AppStates.ANALYZING and self.analysis_screen_drawn:
-            self.harmonic, self.percussive = run_checks(self.audio_path, self.frame_rate, 22050)
-            self.harmonic = list(map(float, self.harmonic))
-            self.percussive = list(map(float, self.percussive))
+            results = run_analysis(self.audio_path, self.frame_rate, 22050)
+            self.harmonic = list(map(float, results["harmonic"]))
+            self.percussive = list(map(float, results["percussive"]))
+            self.beats = list(map(float, results["beats"]))
             self.app_state = AppStates.PLAYING
+            self.player.play()
 
         if self.app_state == AppStates.PLAYING:
-            self.play_group[0].update(100 + 450 * self.percussive[self.frame])
-            self.play_group[1].update(200 + 450 * self.harmonic[self.frame])
-            if not self.player.playing:
-                self.player.play()
-            self.frame += 1
+            pframe = int(self.player.time * self.frame_rate)
+            try:
+                self.play_group[0].update(100 + 450 * self.percussive[pframe])
+                self.play_group[1].update(200 + 450 * self.harmonic[pframe])
+            except IndexError:
+                self.analysis_screen_drawn = False
+                self.player.next_source()
+                self.app_state = AppStates.MAIN_MENU
+
 
     def on_key_press(self, symbol, modifiers):
         if symbol == key.ESCAPE:
                 pyglet.app.exit()
 
-        if self.app_state in [AppStates.MAIN_MENU]:
+        if self.app_state in [AppStates.MAIN_MENU, AppStates.PAUSED]:
             if self.app_state == AppStates.MAIN_MENU:
                 menu = self.main_menu
                 menu_name = 'main'
+            elif self.app_state == AppStates.PAUSED:
+                menu = self.pause_menu
+                menu_name = 'pause'
 
             if symbol == key.DOWN:
                 self.move_menu_select(menu, 1)
@@ -133,6 +149,7 @@ class VisualizerWindow(pyglet.window.Window):
         elif self.app_state == AppStates.PAUSED:
             if symbol == key.SPACE:
                 self.app_state = AppStates.PLAYING
+                self.player.play()
 
     def move_menu_select(self, menu, index):
         """ moves the selected menu item by index amount of items """
@@ -167,4 +184,14 @@ class VisualizerWindow(pyglet.window.Window):
                 self.player.queue(source)
                 self.analysis_screen = self.create_analysis_screen(self.analysis_batch)
                 self.app_state = AppStates.ANALYZING
+        elif menu_name == 'pause':
+            if item == 'exit':
+                pyglet.app.exit()
+            elif item == 'play':
+                self.app_state = AppStates.PLAYING
+                self.player.play()
+            elif item == 'main menu':
+                self.analysis_screen_drawn = False
+                self.player.next_source()
+                self.app_state = AppStates.MAIN_MENU
             

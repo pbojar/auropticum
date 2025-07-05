@@ -1,4 +1,5 @@
 # Project
+*.analysis-cache
 media/
 
 # Byte-compiled / optimized / DLL files
