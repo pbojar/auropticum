@@ -32,6 +32,7 @@ def calc_chroma(y, sr, hop=512):
 def normalize(data, a, b):
     d_min = np.min(data)
     d_max = np.max(data)
+    # TODO: Supress runtime warnings for invalid divide
     return (b - a) * (data - d_min) / (d_max - d_min) + a
 
 def analyze(audio_path: Path, frame_rate: int, sample_rate: int):
@@ -47,7 +48,7 @@ def analyze(audio_path: Path, frame_rate: int, sample_rate: int):
     y_harm, y_perc = librosa.effects.hpss(y, margin=8)
     results["beats"] = get_dynamic_beats(y_perc, sample_rate, hop)
     results["chroma"] = calc_chroma(y_harm, sample_rate, hop)
-    results["fourier"] = librosa.stft(y, hop_length=hop)
+    results["stft_mag"] = np.abs(librosa.stft(y, n_fft=512, hop_length=hop))
     return results
 
 def run_analysis(audio_path: Path, frame_rate: int, sample_rate: int, overwrite: bool = False):

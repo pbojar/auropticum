@@ -1,5 +1,6 @@
 
 from pathlib import Path
+import numpy as np
 
 import pyglet
 from pyglet.window import key, FPSDisplay
@@ -8,7 +9,7 @@ from visualizer import gui, resources
 from visualizer.appstates import AppStates
 from visualizer.circle import Circle
 from visualizer.mediaplayer import Player
-from audioanalyzer.analyze import run_analysis
+from audioanalyzer.analyze import run_analysis, normalize
 
 
 class VisualizerWindow(pyglet.window.Window):
@@ -19,7 +20,7 @@ class VisualizerWindow(pyglet.window.Window):
         # Initialize at main menu
         self.app_state = AppStates.MAIN_MENU
         # FPS display
-        self.frame_rate = 90 # Targeting 90 FPS
+        self.frame_rate = 90 # TODO: Add config for width, height, frame_rate, etc...
         self.fps_display = FPSDisplay(self)
         self.show_fps = show_fps
         # Create main menu
@@ -35,8 +36,6 @@ class VisualizerWindow(pyglet.window.Window):
         # Create play screen
         self.song_over = False
         self.play_batch = pyglet.graphics.Batch()
-        # TODO: More interesting visual effects
-        # TODO: Menu for selecting visual effects
         self.play_group = self.red_and_white(self.play_batch)
         # Create pause menu
         self.pause_menu_batch = pyglet.graphics.Batch()
@@ -75,7 +74,10 @@ class VisualizerWindow(pyglet.window.Window):
     def red_and_white(self, batch: pyglet.graphics.Batch):
         r_circle = Circle(self.width//2, self.height//2, 100, color=(180, 50, 50), batch=batch)
         w_circle = Circle(self.width//2, self.height//2, 100, color=(255, 255, 255), batch=batch)
-        return [r_circle, w_circle]
+        b_circle = None # Circle(self.width//2, self.height//2, 20, color=(255, 0, 255), batch=batch)
+        bc_pos = pyglet.shapes.BezierCurve((0, 0), (1, 1), batch=batch)
+        bc_neg = pyglet.shapes.BezierCurve((0, 0), (1, 1), batch=batch)
+        return [r_circle, w_circle, b_circle, bc_pos, bc_neg]
 
     def create_pause_menu(self, batch: pyglet.graphics.Batch):
         menu_texts = ["play", "main menu", "exit"]
@@ -107,7 +109,21 @@ class VisualizerWindow(pyglet.window.Window):
             results = run_analysis(self.audio_path, self.frame_rate, 22050)
             self.harmonic = list(map(float, results["harmonic"]))
             self.percussive = list(map(float, results["percussive"]))
-            self.beats = list(map(float, results["beats"]))
+            # Beats in seconds (np.float) converted to int frames
+            self.beats = list(map(int, results["beats"] * self.frame_rate))
+            # Scale stft_mag by half of window height and calc corresponding x points
+            self.mag_pos_points = []
+            self.mag_neg_points = []
+            num_pts = 100
+            mirror_idx = num_pts//2
+            pts_x = [self.width/num_pts * i for i in range(0, num_pts + 1)]
+            for row in results["stft_mag"].T:
+                scaled = normalize(row[:mirror_idx+1], self.height//2, self.height)
+                pts_y = np.concat((scaled[::-1], scaled[1:]))
+                pos_points = zip(pts_x, map(float, pts_y))
+                neg_points = zip(pts_x, map(float, self.height - pts_y))
+                self.mag_pos_points.append(list(pos_points))
+                self.mag_neg_points.append(list(neg_points))
             self.app_state = AppStates.PLAYING
             self.player.play()
 
@@ -116,6 +132,9 @@ class VisualizerWindow(pyglet.window.Window):
             try:
                 self.play_group[0].update(100 + 450 * self.percussive[pframe])
                 self.play_group[1].update(200 + 450 * self.harmonic[pframe])
+                # self.play_group[2].thickness = 10.0 if pframe in self.beats else 1.0
+                self.play_group[3].points = self.mag_pos_points[pframe]
+                self.play_group[4].points = self.mag_neg_points[pframe]
             except IndexError:
                 self.analysis_screen_drawn = False
                 self.player.next_source()
