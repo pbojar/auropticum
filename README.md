@@ -47,4 +47,6 @@ Edit `config.py` to change the window size, frame rate, and sample rate.
 
 Here's an example video:
 
+https://github.com/user-attachments/assets/e397a50b-acba-4c69-a8b0-9795acdb7d0e
+
 Have fun!
