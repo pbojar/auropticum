@@ -1,7 +1,6 @@
 import pyglet
 from pyglet.graphics import Batch
 from pyglet.text import Label
-from pyglet.window import Window
 
 
 def create_menu_label(text: str, x: int, y: int, anchor_x, anchor_y, 

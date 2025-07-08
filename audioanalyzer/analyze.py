@@ -32,8 +32,8 @@ def calc_chroma(y, sr, hop=512):
 def normalize(data, a, b):
     d_min = np.min(data)
     d_max = np.max(data)
-    # TODO: Supress runtime warnings for invalid divide
-    return (b - a) * (data - d_min) / (d_max - d_min) + a
+    with np.errstate(invalid='ignore'):
+        return (b - a) * (data - d_min) / (d_max - d_min) + a
 
 def analyze(audio_path: Path, frame_rate: int, sample_rate: int):
     if sample_rate % frame_rate:
