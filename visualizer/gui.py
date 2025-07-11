@@ -10,7 +10,7 @@ def create_menu_label(text: str, x: int, y: int, anchor_x, anchor_y,
         x=x, y=y,
         anchor_x=anchor_x,
         anchor_y=anchor_y,
-        font_size=36,
+        font_size=24,
         color=(255, 255, 255, 255 if selected else 76),
         batch=batch
     )

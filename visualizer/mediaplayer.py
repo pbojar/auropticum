@@ -4,8 +4,13 @@ from visualizer.appstates import AppStates
 
 
 class Player(pyglet.media.Player):
-    """pyglet.media.Player with custom on_player_eos to reset app state 
-       to main menu after end of sound file is reached.
+    """pyglet.media.Player with custom on_player_eos method. 
+    
+    Custom method is used to reset the app state to the main 
+    menu after end of sound file is reached.
+
+    Attributes:
+        visWin (VisualizerWindow): pyglet Window for the app.
     """
 
     def __init__(self, visWin):

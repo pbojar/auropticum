@@ -14,7 +14,8 @@ def get_audio_paths() -> dict[str, Path]:
     """ 
     Get mp3 and wav files in media_path. 
     
-    Returns paths - a dict of file_name: file_path.
+    Returns: 
+        paths (dict[str, Path]): a dict of {file_name: file_path}.
     """
     paths = {}
     for file in media_path.iterdir():

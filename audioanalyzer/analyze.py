@@ -10,14 +10,40 @@ from audioanalyzer.archive import (
 )
 
 
-def load_from_path(path: Path, sample_rate: int):
+def load_from_path(path: Path, sample_rate: int | None):
+    """
+    Loads audio data from given file path using librosa.
+
+    Args:
+        path (Path): Path to file as pathlib.Path object.
+        sample_rate (int|None): Rate in Hz to sample audio at.
+            None uses native sample rate of file.
+
+    Returns:
+        y (np.ndarray): Audio signal. Shape depends on audio format.
+        sr (int): Rate in Hz at which the audio was sampled.
+
+    Raises:
+        Exception: Any error arising from call to librosa.load().
+    """
     try:
         y, sr = librosa.load(path, sr=sample_rate)
         return y, sr
     except Exception as e:
         raise Exception(f"Error: Could load from path {path}\n\n{e}")
 
-def get_dynamic_beats(y, sr, hop=512):
+def get_dynamic_beats(y, sr: int, hop: int = 512):
+    """
+    Attempts to detect time stamps of beats.
+
+    Args:
+        y (np.ndarray): Audio signal to detect beats from.
+        sr (int): Sample rate of the audio signal.
+        hop (int): Hop length to pass to librosa.beat.beat_track.
+
+    Returns:
+        beats (np.ndarray): Array of times at which beats occur.
+    """
     tempo_dynamic = librosa.feature.tempo(y=y, sr=sr, aggregate=None, std_bpm=2, hop_length=hop)
     _, beats = librosa.beat.beat_track(y=y, bpm=tempo_dynamic, hop_length=hop, units='time', trim=False)
     return beats

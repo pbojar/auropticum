@@ -16,8 +16,8 @@ class VisualizerWindow(pyglet.window.Window):
 
     def __init__(self, show_fps: bool = False, output_images: bool = False):
         super().__init__(
-            width=WINDOW_WIDTH, height=WINDOW_HEIGHT, 
-            caption='Auropticum', vsync=False
+            width=WINDOW_WIDTH, height=WINDOW_HEIGHT,
+            caption='Auropticum', vsync=False,
         )
         self.output_images = output_images
         self.out_frame = 0
@@ -65,14 +65,14 @@ class VisualizerWindow(pyglet.window.Window):
     def create_main_menu(self, batch: pyglet.graphics.Batch):
         main_menu_title = pyglet.text.Label(
             text="Auropticum",
-            x=20, y=3*self.height//4,
-            anchor_x='left', anchor_y='bottom',
-            font_size=62,
+            x=20, y=self.height,
+            anchor_x='left', anchor_y='top',
+            font_size=48,
             batch=batch
         )
         menu_texts = list(self.audio_paths.keys()) + ['exit']
-        main_menu = gui.create_menu_labels(menu_texts, 60, 3*self.height//4, 
-                                           'left', 'top', 60, batch)
+        main_menu = gui.create_menu_labels(menu_texts, 40, self.height - 96, 
+                                           'left', 'top', 40, batch)
         return main_menu_title, main_menu
     
     def create_analysis_screen(self, batch: pyglet.graphics.Batch):
@@ -80,7 +80,7 @@ class VisualizerWindow(pyglet.window.Window):
             text=f"Analyzing {self.audio_path.stem}...",
             x=self.width//2, y=self.height//2,
             anchor_x='center', anchor_y='center',
-            font_size=52,
+            font_size=28,
             batch=batch
         )
     
@@ -131,7 +131,7 @@ class VisualizerWindow(pyglet.window.Window):
             # Scale stft_mag by half of window height and calc corresponding x points
             self.mag_pos_points = []
             self.mag_neg_points = []
-            num_pts = 100
+            num_pts = 50
             mirror_idx = num_pts//2
             pts_x = [self.width/num_pts * i for i in range(0, num_pts + 1)]
             for row in results["stft_mag"].T:

@@ -1,5 +1,5 @@
-WINDOW_HEIGHT = 1080    # px
-WINDOW_WIDTH = 1920     # px
+WINDOW_HEIGHT = 720     # px
+WINDOW_WIDTH = 1280     # px
 FRAME_RATE = 60         # fps
 SAMPLE_RATE = 22050     # Hz
 
