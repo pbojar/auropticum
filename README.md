@@ -9,20 +9,26 @@ A music visualization app written in Python using [pyglet](https://pyglet.readth
 3. Create a conda environment using `requirements.txt`:
 
 ```
-$ conda create --name <env> --file <PATH-TO-REPO>/requirements.txt
+$ conda create --name <env>
 ```
 
-4. Add songs (as `.mp3` or `.wav` files) to the empty `media` directory. Songs must be added before running the app.
+4. Install `librosa` and `pyglet` using conda:
 
-5. Activate your conda environment:
+```
+$ conda install librosa pyglet
+```
+
+5. Add songs (as `.mp3` or `.wav` files) to the empty `media` directory. Songs must be added before running the app.
+
+6. Activate your conda environment:
 
 ```
 $ conda activate <env>
 ```
 
-6. (Optional) Edit `config.py` to change the window size, frame rate, and sample rate.
+7. (Optional) Edit `config.py` to change the window size, frame rate, and sample rate.
 
-7. Run `main.py`:
+8. Run `main.py`:
 
 ```
 $ python .\main.py
